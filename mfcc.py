@@ -96,67 +96,75 @@ class SignalProcessing:
 
 	def compute_mfcc(self, file_name, FL, window_size, include, mean):
 
-			(fs, x) = scipy.io.wavfile.read(file_name)
+		"""
+		Computes the mfcc, adds the current signal to the mean and plots it
+		param @file_name: the file we compute mfcc on
+		param @FL: the current index we insert into mean (mean[i] = cur_MFCC)
+		param @window_size: window size we take the fft on
+		param @include: whether the current signal is the data or the reference
+		param @mean: np.array to fill up
+		"""
+		(fs, x) = scipy.io.wavfile.read(file_name)
 
-			""" First step, block process fft using a hanning window """
-			step_ms = 25 									# 25 msec steps
-			overlap = fs / 100
-			window_size = 1024
+		""" First step, block process fft using a hanning window """
+		step_ms = 25 									# 25 msec steps
+		overlap = fs / 100
+		window_size = 1024
 
-			num_win = int(math.ceil(x.size / (2 * overlap)) + 1)	# Number of windows
-			size = (window_size / 2) + 1 							# Size = 513 (1024 / 2 + 1)
+		num_win = int(math.ceil(x.size / (2 * overlap)) + 1)	# Number of windows
+		size = (window_size / 2) + 1 							# Size = 513 (1024 / 2 + 1)
 
-			windowed_fft = np.zeros((num_win, size))
+		windowed_fft = np.zeros((num_win, size))
 
-			win_count = 0
-			for i in range(0, x.size / 2, overlap):
-				windowed_x = np.zeros(window_size)
-				count = 0
-				for j in range(i, min(i + window_size, x.size / 2)):
-					windowed_x[count] = x[j][0]
-					count += 1 
-				W = scipy.signal.hanning(window_size, False)
-				""" Second step, calculate periodogram estimate of power spectrum """
-				windowed_fft[win_count] = self.periodogram(scipy.fft(windowed_x * W))
-				win_count += 1
+		win_count = 0
+		for i in range(0, x.size / 2, overlap):
+			windowed_x = np.zeros(window_size)
+			count = 0
+			for j in range(i, min(i + window_size, x.size / 2)):
+				windowed_x[count] = x[j][0]
+				count += 1 
+			W = scipy.signal.hanning(window_size, False)
+			""" Second step, calculate periodogram estimate of power spectrum """
+			windowed_fft[win_count] = self.periodogram(scipy.fft(windowed_x * W))
+			win_count += 1
 
-			""" Third step, apply mel filterbank to power spectra """
-			num_filter = 28
-			(Hm, f) = self.create_filter(num_filter, 300, fs / 2, window_size, fs)
+		""" Third step, apply mel filterbank to power spectra """
+		num_filter = 28
+		(Hm, f) = self.create_filter(num_filter, 300, fs / 2, window_size, fs)
 
-			windows = np.zeros((num_filter - 2, 2))			# The filter ranges, e.g. 19->30, 24->36, 30->43
+		windows = np.zeros((num_filter - 2, 2))			# The filter ranges, e.g. 19->30, 24->36, 30->43
 
-			# Creating the window ranges, e.g. [[9, 12],[12, 15], [15, 18]]
-			for i in range(num_filter - 2):
-				windows[i] = ((f[i], f[i + 2]))
+		# Creating the window ranges, e.g. [[9, 12],[12, 15], [15, 18]]
+		for i in range(num_filter - 2):
+			windows[i] = ((f[i], f[i + 2]))
 
-			bank_energies = np.zeros(num_filter - 2)
+		bank_energies = np.zeros(num_filter - 2)
 
-			for i in range(num_win):
-				# Computing energies, using upper bound and lower bounds
-				for j in range(num_filter - 2):
-					LB = int(windows[j][0]) + 1
-					UB = int(windows[j][1])
+		for i in range(num_win):
+			# Computing energies, using upper bound and lower bounds
+			for j in range(num_filter - 2):
+				LB = int(windows[j][0]) + 1
+				UB = int(windows[j][1])
 
-					for k in range(LB, UB):
-						bank_energies[j] += (Hm[j][k] * windowed_fft[i][k])
+				for k in range(LB, UB):
+					bank_energies[j] += (Hm[j][k] * windowed_fft[i][k])
 
-			""" Fourth step, take logarithm of all filterbank energies """
-			bank_energies = np.log10(bank_energies)
+		""" Fourth step, take logarithm of all filterbank energies """
+		bank_energies = np.log10(bank_energies)
 
-			""" Fifth step, take DCT-2 of filterbank energies """
-			dct_energy = scipy.fftpack.dct(bank_energies, 2)
-			
-			coeff = np.zeros(rem_size)
+		""" Fifth step, take DCT-2 of filterbank energies """
+		dct_energy = scipy.fftpack.dct(bank_energies, 2)
+		
+		coeff = np.zeros(rem_size)
 
-			for i in range(2, 14):
-				coeff[i - 2] = dct_energy[i]
+		for i in range(2, 14):
+			coeff[i - 2] = dct_energy[i]
 
-			if (include == True):
-				mean[FL] = coeff
-				plt.plot(coeff, label=file_name)
-			else:
-				plt.plot(coeff, label=file_name, linewidth=4.0)
+		if (include == True):
+			mean[FL] = coeff
+			plt.plot(coeff, label=file_name)
+		else:
+			plt.plot(coeff, label=file_name, linewidth=4.0)
 
 def main():
 	if (len(sys.argv) != 4):

@@ -230,23 +230,23 @@ else:
 				dip = False
 
 				# Check if there's a dip afterwards
-				while (after < min(len(RMS), j + 10) or peak_val > RMS[after][0]):
+				while (after < min(len(RMS), j + 5) or peak_val > RMS[after][0]):
 					if (RMS[after][0] < lower_threshold):
 						flag_after = True
 						break
 					after += 1
 
-				before = max(j - 10, 0)		# In case j is < 20
+				before = max(j - 5, 0)		# In case j is < 20
 
 				flag_before = False
 				tmp_sum = 0
 
 				# Check if there's a dip before
-				for before in range(max(j - 5, 0), j):
-					tmp_sum += (RMS[before][0] / 5)
-
-				if (tmp_sum < peak_val):
-					flag_before = True
+				while (before < j or peak_val > RMS[before][0]):
+					if (RMS[before][0] < lower_threshold):
+						flag_before = True
+						break
+					before += 1
 
 				# IFF there is a dip before and after we can proceed
 				insert = False
@@ -264,7 +264,7 @@ else:
 					# Move over the peak into a dip area
 					while (i < len(RMS) - 1):
 						if (RMS[i][0] < lower_threshold):
-							while (RMS[i][0] > RMS[i + 1][0]):
+							while (RMS[i][0] > RMS[i + 1][0] and (i < len(RMS) - 2)):
 								i += 1
 							break
 						#if (RMS[i][0] > peak_val):
