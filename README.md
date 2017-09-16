@@ -1,5 +1,5 @@
 #### Subsolution to speech recognition MAJOR PROJECT 
-Currently being developed
+*Currently being developed*
 
 #### Two main components are: syllable separation and MFCC computation
 ##### Syllable separation: 
@@ -15,7 +15,9 @@ Currently being developed
 ##### Other random components:
 	yes_no.py (way to separate yes and no)
 	triangle_filters.py (created the triangular filters, function inc. in mfcc.py)
-	split_wav.py (splits a wav by time, function inc. in mfcc.py)
+	split_wav.py (splits a wav by time, function inc. in mfcc.py)	
 ##### Data:
 The data I have created won't be uploaded onto github, currently has ~50 .wav files
+*Example output of ./syl.py <.wav> 1 for word "little"*
+![Alt text](/little.png?raw=true "Optional Title")
 
