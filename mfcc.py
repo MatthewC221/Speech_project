@@ -16,6 +16,8 @@ class SignalProcessing:
 		"""
 		Calculates the periodogram estimate of power spectrum
 		param @arr: np.array of fft window
+
+		return @ret: the periodogram estimate of power spectrum
 		"""
 		ret_size = (arr.size / 2) + 1
 		ret = np.zeros(ret_size)
@@ -30,6 +32,8 @@ class SignalProcessing:
 		"""
 		Convers to mel scale from frequency
 		param @arr: np.array of frequency
+
+		return @ret: np.array of mel scaled frequency
 		"""
 		ret = np.zeros(arr.size)
 		for i in range(arr.size):
@@ -41,6 +45,8 @@ class SignalProcessing:
 		"""
 		Coverts frequency to mel frequency
 		param @num: frequency 
+
+		return @mel_num: mel frequency of num
 		"""
 		return (1125 * math.log((1 + float(num) / 700), E))
 
@@ -48,6 +54,8 @@ class SignalProcessing:
 		"""
 		Returns inverse mel conversion
 		param @num: the current mel number
+
+		return @inv_num: inverse mel of num
 		"""
 		return (700 * (math.exp(num / 1125) - 1))
 
@@ -59,6 +67,9 @@ class SignalProcessing:
 		param @max_freq: max_freq we want to capture, normally fs/2
 		param @size: fft_size
 		param @FS: sample rate of signal
+
+		return @Hm: the triangular filters (np.array of each triangle)
+		return @f: the filter ranges (e.g. [[9, 12], [10, 13], [12, 15])
 		"""
 		min_val = self.mel_freq(min_freq)
 		max_val = self.mel_freq(max_freq)

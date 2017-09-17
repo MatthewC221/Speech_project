@@ -12,8 +12,14 @@ import wave
 import matplotlib.pyplot as plt
 import math
 
-# Splitting into syllables so we can analyse each
 def split_wav(times, file_name):
+
+	"""
+	Splits up a .wav file into multiple .wav files based on time
+	e.g. times=[1.0, 2.0, 3.0], there will be 4 .wav files (0->1, 1->2, 3->end)
+	param @times: the times to split the file into
+	param @file_name: the file to split
+	"""	
 
 	origAudio = wave.open(file_name,'r')
 	frameRate = origAudio.getframerate()
@@ -22,9 +28,8 @@ def split_wav(times, file_name):
 
 	S = 0
 	start = float(S)
-	times.append(10)
+	times.append(10) 						# For cutting off the last syllable
 
-	print times
 	for i in range(len(times)):
 		end = float(times[i])
 		origAudio.setpos(int(start*frameRate))
@@ -218,7 +223,7 @@ else:
 			if (len(last_peak) == 0 or i > last_peak[-1] + 5):
 				peak_val = 0
 				# Requires a time difference of 5 windows and also a peak in the next
-				# 30 windows (A < P > C)
+				# 30 windows (A < P > B)
 				for j in range(i, min(i + 30, len(RMS))):
 					if ((RMS[j][0] > RMS[j - 1][0] and RMS[j][0] > RMS[j + 1][0])):
 						break
@@ -229,7 +234,7 @@ else:
 				flag_after = False
 				dip = False
 
-				# Check if there's a dip afterwards
+				# Check if there's a dip in the next 5 windows
 				while (after < min(len(RMS), j + 5) or peak_val > RMS[after][0]):
 					if (RMS[after][0] < lower_threshold):
 						flag_after = True
@@ -241,7 +246,7 @@ else:
 				flag_before = False
 				tmp_sum = 0
 
-				# Check if there's a dip before
+				# Check if there's a dip in the previous 5 windows
 				while (before < j or peak_val > RMS[before][0]):
 					if (RMS[before][0] < lower_threshold):
 						flag_before = True
@@ -264,7 +269,7 @@ else:
 					# Move over the peak into a dip area
 					while (i < len(RMS) - 1):
 						if (RMS[i][0] < lower_threshold):
-							while (RMS[i][0] > RMS[i + 1][0] and (i < len(RMS) - 2)):
+							while (RMS[i][0] > RMS[i + 1][0] and (i < len(RMS) - 1)):
 								i += 1
 							break
 						#if (RMS[i][0] > peak_val):
