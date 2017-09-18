@@ -44,7 +44,7 @@ def split_wav(times, file_name):
 		chunkAudio.setframerate(frameRate)
 		chunkAudio.writeframes(chunkData)
 		chunkAudio.close()
-		start = end - 0.01
+		start = end - 0.05
 
 if (len(sys.argv) != 3):
 	print "Usage ./syl.py <.wav file> <plot (0/1)>"
@@ -235,13 +235,13 @@ else:
 				dip = False
 
 				# Check if there's a dip in the next 5 windows
-				while (after < min(len(RMS), j + 5) or peak_val > RMS[after][0]):
+				while (after < min(len(RMS), j + 10) or peak_val > RMS[after][0]):
 					if (RMS[after][0] < lower_threshold):
 						flag_after = True
 						break
 					after += 1
 
-				before = max(j - 5, 0)		# In case j is < 20
+				before = max(j - 10, 0)		# In case j is < 20
 
 				flag_before = False
 				tmp_sum = 0
@@ -269,14 +269,14 @@ else:
 					# Move over the peak into a dip area
 					while (i < len(RMS) - 1):
 						if (RMS[i][0] < lower_threshold):
-							while (RMS[i][0] > RMS[i + 1][0] and (i < len(RMS) - 1)):
+							while (RMS[i][0] > RMS[i + 1][0] and (i < len(RMS) - 2)):
 								i += 1
 							break
 						#if (RMS[i][0] > peak_val):
 						#	break
 						i += 1
 					if (insert == True):
-						split.append(i)
+						split.append(i + 3)
 				else:
 					count_ABOVE = 0
 					count_BELOW = 0
@@ -287,12 +287,13 @@ else:
 		i += 1
 
 	print "Syllable = " + str(syl)
+	print split
 	time_split = [(0.016 * x) for x in split]
 	if (len(time_split) > 0):
 		del time_split[-1]
 	
-	if (len(time_split) > 1):
-		time_split[0] += 0.5
+	#if (len(time_split) > 1):
+	#	time_split[0] += 0.5
 
 	print "Split at times: " + str(time_split)
 

@@ -10,6 +10,7 @@ import math
 
 E = 2.7182818284590452353
 rem_size = 12
+num_files = -1
 
 class SignalProcessing:
 	def periodogram(self, arr):
@@ -27,6 +28,36 @@ class SignalProcessing:
 			ret[i] = mult * abs(arr[i] ** 2)
 
 		return ret
+
+	def E_calculation(self, ave, ref):
+		"""
+		Attempts to fit the ref signal to the average signal (using MSE)
+		param @ave: the average signal 
+		param @ref: the reference signal
+
+		return @E: 
+		return @Alpha:
+		"""
+		# Alpha = (sum c[n] * m[n]) / (sum c[n] ** 2)
+		num = 0
+		denom = 0
+		E = 0
+
+		print ave
+		print "ref"
+		print ref
+
+		for i in range(ave.size):
+			num += (ave[i] * ref[i])
+			denom += (ave[i] ** 2)
+
+		print "Num = " + str(num) + ", denom = " + str(denom)
+		alpha = float(num) / denom
+
+		for i in range(ave.size):
+			E += (ave[i] - (ref[i] * alpha)) ** 2
+
+		return (E, alpha)
 
 	def mel_scaled(self, arr):
 		"""
@@ -174,8 +205,9 @@ class SignalProcessing:
 		if (include == True):
 			mean[FL] = coeff
 			plt.plot(coeff, label=file_name)
-		else:
+		else:		# If false, this is the reference signal, compute MSE
 			plt.plot(coeff, label=file_name, linewidth=4.0)
+			return coeff
 
 def main():
 	if (len(sys.argv) != 4):
@@ -189,15 +221,17 @@ def main():
 			file_name = sys.argv[1] + str(FL) + ".wav"
 			signal.compute_mfcc(file_name, FL, 1024, True, mean)
 
-		if (sys.argv[2] != "F"):
-			compared = sys.argv[2] + ".wav"
-			signal.compute_mfcc(compared, 0, 1024, False, mean)
-
 		total_mean = np.zeros(rem_size)
 		for i in range(num_files):
 			for j in range(rem_size):
 				total_mean[j] += (mean[i][j] / (num_files))
 
+		if (sys.argv[2] != "F"):
+			ref = sys.argv[2] + ".wav"
+			coeff = signal.compute_mfcc(ref, 0, 1024, False, mean)
+			E, alpha = signal.E_calculation(total_mean, coeff)
+			print "E = " + str(E) + ", alpha = " + str(alpha)
+			
 		plt.plot(total_mean, label="Mean of files", linewidth=5.0)
 		plt.legend()
 		plt.ylabel("Amplitude")
