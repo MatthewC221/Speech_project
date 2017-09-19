@@ -16,7 +16,6 @@ class SignalProcessing:
 	def compare(self, mfcc):
 		""" 
 		Compares the MFCC values calculated with the reference data ones
-
 		param @coeff: calculated MFCC
 		"""
 		f = open("data.txt", "r")
@@ -31,9 +30,17 @@ class SignalProcessing:
 				ref[count] = float(tmp)
 				count += 1
 
+			# Taking difference in jumps
+			jmp_diff = 0 
+			for i in range(1, ref.size):
+				jmp1 = mfcc[i] - mfcc[i - 1]
+				jmp2 = ref[i] - ref[i - 1]
+				jmp_diff += (jmp1 - jmp2)
+
 			E, alpha = self.E_calculation(mfcc, ref)
 			diff = abs(sum(mfcc - ref))
-			print "E = " + str(E) + ", alpha = " + str(alpha) + ", diff = " + str(diff) + "\n"
+			print "E = " + str(E) + ", alpha = " + str(alpha) 
+			print "Jump diff = " + str(abs(jmp_diff)) + ", overall diff = " + str(diff) + "\n"
 
 	def periodogram(self, arr):
 		"""
