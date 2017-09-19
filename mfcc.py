@@ -13,6 +13,28 @@ rem_size = 12
 num_files = -1
 
 class SignalProcessing:
+	def compare(self, mfcc):
+		""" 
+		Compares the MFCC values calculated with the reference data ones
+
+		param @coeff: calculated MFCC
+		"""
+		f = open("data.txt", "r")
+		for line in f:
+			parse = line.split(":")
+			print "Calculating for syllable: " + parse[0]
+			coeff = parse[1].split(",")
+
+			ref = np.zeros(rem_size)
+			count = 0
+			for tmp in coeff:
+				ref[count] = float(tmp)
+				count += 1
+
+			E, alpha = self.E_calculation(mfcc, ref)
+			diff = abs(sum(mfcc - ref))
+			print "E = " + str(E) + ", alpha = " + str(alpha) + ", diff = " + str(diff) + "\n"
+
 	def periodogram(self, arr):
 		"""
 		Calculates the periodogram estimate of power spectrum
@@ -43,15 +65,10 @@ class SignalProcessing:
 		denom = 0
 		E = 0
 
-		print ave
-		print "ref"
-		print ref
-
 		for i in range(ave.size):
 			num += (ave[i] * ref[i])
 			denom += (ave[i] ** 2)
 
-		print "Num = " + str(num) + ", denom = " + str(denom)
 		alpha = float(num) / denom
 
 		for i in range(ave.size):
@@ -217,26 +234,33 @@ def main():
 		signal = SignalProcessing()
 		mean = np.zeros((num_files, 12))
 
-		for FL in range(num_files):						# Run for multiple files
-			file_name = sys.argv[1] + str(FL) + ".wav"
-			signal.compute_mfcc(file_name, FL, 1024, True, mean)
+		if (num_files == 0):
+			file_name = sys.argv[1] + ".wav"
+			coeff = signal.compute_mfcc(file_name, 0, 1024, False, mean)
+			signal.compare(coeff)
+		else:
+			for FL in range(num_files):						# Run for multiple files
+				file_name = sys.argv[1] + str(FL) + ".wav"
+				signal.compute_mfcc(file_name, FL, 1024, True, mean)
 
-		total_mean = np.zeros(rem_size)
-		for i in range(num_files):
-			for j in range(rem_size):
-				total_mean[j] += (mean[i][j] / (num_files))
+			total_mean = np.zeros(rem_size)
+			for i in range(num_files):
+				for j in range(rem_size):
+					total_mean[j] += (mean[i][j] / (num_files))
 
-		if (sys.argv[2] != "F"):
-			ref = sys.argv[2] + ".wav"
-			coeff = signal.compute_mfcc(ref, 0, 1024, False, mean)
-			E, alpha = signal.E_calculation(total_mean, coeff)
-			print "E = " + str(E) + ", alpha = " + str(alpha)
-			
-		plt.plot(total_mean, label="Mean of files", linewidth=5.0)
-		plt.legend()
-		plt.ylabel("Amplitude")
-		plt.xlabel("Coefficients")
-		plt.show()
+			if (sys.argv[2] != "F"):
+				ref = sys.argv[2] + ".wav"
+				coeff = signal.compute_mfcc(ref, 0, 1024, False, mean)
+				E, alpha = signal.E_calculation(total_mean, coeff)
+				print "E = " + str(E) + ", alpha = " + str(alpha)
+			else:
+				print total_mean
+
+			plt.plot(total_mean, label="Mean of files", linewidth=5.0)
+			plt.legend()
+			plt.ylabel("Amplitude")
+			plt.xlabel("Coefficients")
+			plt.show()
 
 if __name__ == "__main__":
 	main()

@@ -175,7 +175,7 @@ else:
 	# Step 3
 
 	# upper_threshold = mean / count
-	upper_threshold = np.max(RMS) / 7
+	upper_threshold = np.max(RMS) / 5
 	step = mean / 6
 	lower_threshold = upper_threshold / 3 		 		
 
@@ -235,13 +235,13 @@ else:
 				dip = False
 
 				# Check if there's a dip in the next 5 windows
-				while (after < min(len(RMS), j + 10) or peak_val > RMS[after][0]):
+				while (after < min(len(RMS), j + 7) or peak_val > RMS[after][0]):
 					if (RMS[after][0] < lower_threshold):
 						flag_after = True
 						break
 					after += 1
 
-				before = max(j - 10, 0)		# In case j is < 20
+				before = max(j - 7, 0)		# In case j is < 20
 
 				flag_before = False
 				tmp_sum = 0
