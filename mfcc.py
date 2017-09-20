@@ -8,16 +8,23 @@ import wave
 import matplotlib.pyplot as plt
 import math
 
+# Currently to classify syllables, ./mfcc.py <.wav> 0 -1 <correct_wav>
+
 E = 2.7182818284590452353
 rem_size = 12
 num_files = -1
 
 class SignalProcessing:
-	def compare(self, mfcc):
+	def compare(self, mfcc, right_syl):
 		""" 
 		Compares the MFCC values calculated with the reference data ones
 		param @coeff: calculated MFCC
 		"""
+
+		min_E = sys.maxint
+		saved = np.zeros(rem_size)
+		name = "-1"
+
 		f = open("data.txt", "r")
 		for line in f:
 			parse = line.split(":")
@@ -38,9 +45,25 @@ class SignalProcessing:
 				jmp_diff += (jmp1 - jmp2)
 
 			E, alpha = self.E_calculation(mfcc, ref)
+			if (E < min_E):
+				min_E = E
+				saved = np.copy(ref)
+				name = parse[0]
+
+			if (parse[0] == right_syl):
+				plt.plot(ref, label=parse[0], linewidth=5.0)
+
 			diff = abs(sum(mfcc - ref))
 			print "E = " + str(E) + ", alpha = " + str(alpha) 
 			print "Jump diff = " + str(abs(jmp_diff)) + ", overall diff = " + str(diff) + "\n"
+		
+		plt.plot(mfcc, label="Current MFCC", linewidth=5.0)
+		plt.plot(saved, label="Closest syllable: " + name)
+		plt.legend()
+		plt.ylabel("Amplitude")
+		plt.xlabel("Coefficients")
+		plt.show()
+		
 
 	def periodogram(self, arr):
 		"""
@@ -72,9 +95,12 @@ class SignalProcessing:
 		denom = 0
 		E = 0
 
+		# print ref 
+		# print ave
+
 		for i in range(ave.size):
 			num += (ave[i] * ref[i])
-			denom += (ave[i] ** 2)
+			denom += (ref[i] ** 2)
 
 		alpha = float(num) / denom
 
@@ -230,21 +256,22 @@ class SignalProcessing:
 			mean[FL] = coeff
 			plt.plot(coeff, label=file_name)
 		else:		# If false, this is the reference signal, compute MSE
-			plt.plot(coeff, label=file_name, linewidth=4.0)
+			# plt.plot(coeff, label=file_name, linewidth=4.0)
 			return coeff
 
 def main():
-	if (len(sys.argv) != 4):
-		print "Usage ./mfcc.py <.wav file> <compared_wav> <number_wav>"
+	if (len(sys.argv) != 5):
+		print "Usage ./mfcc.py <.wav file> <compared_wav> <number_wav> <right_syllable>"
 	else:
 		num_files = int(sys.argv[3]) + 1
 		signal = SignalProcessing()
 		mean = np.zeros((num_files, 12))
+		right_syl = sys.argv[4]
 
 		if (num_files == 0):
 			file_name = sys.argv[1] + ".wav"
 			coeff = signal.compute_mfcc(file_name, 0, 1024, False, mean)
-			signal.compare(coeff)
+			signal.compare(coeff, right_syl)
 		else:
 			for FL in range(num_files):						# Run for multiple files
 				file_name = sys.argv[1] + str(FL) + ".wav"
