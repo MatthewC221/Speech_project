@@ -46,6 +46,85 @@ def split_wav(times, file_name):
 		chunkAudio.close()
 		start = end - 0.05
 
+def periodogram(arr):
+	"""
+	Calculates the periodogram estimate of power spectrum
+	param @arr: np.array of fft window
+
+	return @ret: the periodogram estimate of power spectrum
+	"""
+	ret_size = (arr.size / 2) + 1
+	ret = np.zeros(ret_size)
+	mult = (float(1) / ret_size)
+
+	for i in range(ret_size):
+		ret[i] = mult * abs(arr[i] ** 2)
+
+	return ret
+
+def unvoiced(x, time_step, window_size):
+	"""
+	Attempts to separate voiced and unvoiced components
+	param @x: PCM signal
+	param @time_step: the time between each window 
+
+	Steps
+	1. Get windowed FFT with hanning window
+	2. Calculate power spectrum = P
+	3. Log power spectrum 10log10(p) = L
+	4. Rolling median of L of size X = M
+	5. Calculate ratio of total to voiced (sum p[x] / sum p[x] where l[x] > m[x] + 8)
+	"""
+
+	num_win = int(math.ceil(x.size / (2 * time_step)) + 1)	# Number of windows
+	size = (window_size / 2) + 1 
+
+	power = np.zeros((num_win, size))
+	win_count = 0
+
+	# Get power spectrum of windowed FFT with hanning window
+	for i in range(0, x.size / 2, time_step):
+		windowed_x = np.zeros(window_size)
+		count = 0
+		for j in range(i, min(i + window_size, x.size / 2)):
+			windowed_x[count] = x[j][0]
+			count += 1 
+		W = scipy.signal.hanning(window_size, False)
+		power[win_count] = periodogram(scipy.fft(windowed_x * W))
+		win_count += 1	
+
+	log_power = 10 * np.log10(power)
+
+	median_len = 10 							# Rolling of median 21
+	median_arr = np.zeros((num_win, size))
+
+	for i in range(num_win):
+		for j in range(median_len, size - median_len):
+			cur = []
+			for k in range(j - median_len, j + (median_len + 1)):
+				cur.append(log_power[i][k])
+			cur.sort()
+			median_arr[i][j] = cur[median_len]
+
+	for i in range(num_win):
+	 	tot = sum(power[i])
+	 	tot_voiced = 0
+		for j in range(size):
+			if (log_power[i][j] > median_arr[i][j] + 8):
+				tot_voiced += power[i][j]
+
+		ratio = float(tot_voiced) / tot
+		if (ratio > 0.95):
+			print "Window = " + str(i) + ", ratio = " + str(ratio)
+
+	plt.figure(1)
+	plt.subplot(1, 2, 1)
+	plt.plot(median_arr)
+
+	plt.subplot(1, 2, 2)
+	plt.plot(log_power)
+	plt.show()
+
 if (len(sys.argv) != 3):
 	print "Usage ./syl.py <.wav file> <plot (0/1)>"
 else:
@@ -96,6 +175,7 @@ else:
 		RMS[count][1] = math.sqrt(mean_squared_2 / window_size)
 		count += 1
 
+	unvoiced(x, time_step, window_size)
 	# End of step 1
 
 	# Step 2: calculate threshold, testing mode / mean / median intensity
