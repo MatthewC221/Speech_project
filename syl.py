@@ -12,8 +12,22 @@ import wave
 import matplotlib.pyplot as plt
 import math
 
-def split_wav(times, file_name):
+def calculate_mean(arr, start, end):
+	"""
+	Used for calculating the mean ratio of a syllable 
+	param @arr: array to calculate (will be the ratio arr)
+	param @start: start ind
+	param @end: end ind
 
+	return @mean
+	"""
+	cur = 0
+	for i in range(start, end):
+		cur += arr[i]
+
+	return (float(cur) / (end - start))
+
+def split_wav(times, file_name):
 	"""
 	Splits up a .wav file into multiple .wav files based on time
 	e.g. times=[1.0, 2.0, 3.0], there will be 4 .wav files (0->1, 1->2, 3->end)
@@ -68,6 +82,8 @@ def unvoiced(x, time_step, window_size):
 	param @x: PCM signal
 	param @time_step: the time between each window 
 
+	return @ratio: ratio of unvoiced to voiced windows
+
 	Steps
 	1. Get windowed FFT with hanning window
 	2. Calculate power spectrum = P
@@ -95,7 +111,7 @@ def unvoiced(x, time_step, window_size):
 
 	log_power = 10 * np.log10(power)
 
-	median_len = 10 							# Rolling of median 21
+	median_len = 4 							# Rolling of median 21
 	median_arr = np.zeros((num_win, size))
 
 	for i in range(num_win):
@@ -106,6 +122,7 @@ def unvoiced(x, time_step, window_size):
 			cur.sort()
 			median_arr[i][j] = cur[median_len]
 
+	ratio = np.zeros(num_win)
 	for i in range(num_win):
 	 	tot = sum(power[i])
 	 	tot_voiced = 0
@@ -113,17 +130,9 @@ def unvoiced(x, time_step, window_size):
 			if (log_power[i][j] > median_arr[i][j] + 8):
 				tot_voiced += power[i][j]
 
-		ratio = float(tot_voiced) / tot
-		if (ratio > 0.95):
-			print "Window = " + str(i) + ", ratio = " + str(ratio)
+		ratio[i] = float(tot_voiced) / tot
 
-	plt.figure(1)
-	plt.subplot(1, 2, 1)
-	plt.plot(median_arr)
-
-	plt.subplot(1, 2, 2)
-	plt.plot(log_power)
-	plt.show()
+	return ratio
 
 if (len(sys.argv) != 3):
 	print "Usage ./syl.py <.wav file> <plot (0/1)>"
@@ -175,7 +184,7 @@ else:
 		RMS[count][1] = math.sqrt(mean_squared_2 / window_size)
 		count += 1
 
-	unvoiced(x, time_step, window_size)
+	ratio = unvoiced(x, time_step, window_size)
 	# End of step 1
 
 	# Step 2: calculate threshold, testing mode / mean / median intensity
@@ -283,7 +292,7 @@ else:
 	"""
 
 	last_peak = []
-
+	ratio_syl = []
 	# The core processing part, determining peaks and dips
 
 	while (len(RMS) > i):
@@ -312,7 +321,9 @@ else:
 				lower_threshold = max(upper_threshold / 3, RMS[j][0] - step)
 				after = j 
 				flag_after = False
+				flag_before = False
 				dip = False
+				before = max(j - 7, 0)	
 
 				# Check if there's a dip in the next 5 windows
 				while (after < min(len(RMS), j + 7) or peak_val > RMS[after][0]):
@@ -320,11 +331,6 @@ else:
 						flag_after = True
 						break
 					after += 1
-
-				before = max(j - 7, 0)		# In case j is < 20
-
-				flag_before = False
-				tmp_sum = 0
 
 				# Check if there's a dip in the previous 5 windows
 				while (before < j or peak_val > RMS[before][0]):
@@ -338,12 +344,17 @@ else:
 				if (flag_before == True and flag_after == True):
 					# print "1. I = " + str(i)
 					if (RMS[j][0] > upper_threshold):
-						outline[j] = RMS[j][0]
 						i = j + 3
-						last_peak.append(j)
-						syl += 1
 						count_ABOVE = 0
-						insert = True
+
+						calc = calculate_mean(ratio, max(0, j - 3), min(ratio.size, j + 3))
+						print "Attempted = " + str(calc) + ", on j = " + str(j)
+						if (calc > 0.20):
+							ratio_syl.append(calc)
+							last_peak.append(j)
+							syl += 1
+							outline[j] = RMS[j][0]
+							insert = True
 
 					# print "2. I = " + str(i)
 					# Move over the peak into a dip area
@@ -366,16 +377,23 @@ else:
 			dip = True	
 		i += 1
 
-	print "Syllable = " + str(syl)
-	print split
+	print "Syllable count = " + str(syl)
+
+	start = 0
+
+	"""
+	for i in range(len(split)):
+		mean_ratio = calculate_mean(ratio, start, split[i])
+		print "Ratio for syllable " + str(i) + ", = " + str(mean_ratio)
+		start = split[i]
+	"""
+
 	time_split = [(0.016 * x) for x in split]
 	if (len(time_split) > 0):
 		del time_split[-1]
-	
-	#if (len(time_split) > 1):
-	#	time_split[0] += 0.5
 
 	print "Split at times: " + str(time_split)
+	print ratio_syl
 
 	# Last step, extract pitch contour using 100msec windows and 20msec time steps
 	"""
