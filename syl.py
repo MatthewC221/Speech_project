@@ -58,7 +58,7 @@ def split_wav(times, file_name):
 		chunkAudio.setframerate(frameRate)
 		chunkAudio.writeframes(chunkData)
 		chunkAudio.close()
-		start = end - 0.05
+		start = end
 
 def periodogram(arr):
 	"""
@@ -265,7 +265,7 @@ else:
 
 	# upper_threshold = mean / count
 	upper_threshold = np.max(RMS) / 5
-	step = mean / 6
+	step = mean / 4
 	lower_threshold = upper_threshold / 3 		 		
 
 	dip = True									# First syllable doesn't require a dip
@@ -276,6 +276,7 @@ else:
 	print "----- Final thresholds -----"
 	print "The upper threshold = " + str(upper_threshold)
 	print "The starting lower threshold = " + str(lower_threshold)
+	print "Step = " + str(step)
 
 	split = []			# The times for the syllable split
 
@@ -358,16 +359,18 @@ else:
 
 					# print "2. I = " + str(i)
 					# Move over the peak into a dip area
+
 					while (i < len(RMS) - 1):
 						if (RMS[i][0] < lower_threshold):
-							while (RMS[i][0] > RMS[i + 1][0] and (i < len(RMS) - 2)):
+							while ((RMS[i][0] > RMS[i + 1][0] or RMS[i][0] > RMS[i + 2][0]) and 
+								(i < len(RMS) - 2)):
 								i += 1
 							break
 						#if (RMS[i][0] > peak_val):
 						#	break
 						i += 1
 					if (insert == True):
-						split.append(i + 3)
+						split.append(i)
 				else:
 					count_ABOVE = 0
 					count_BELOW = 0
@@ -392,6 +395,7 @@ else:
 	if (len(time_split) > 0):
 		del time_split[-1]
 
+	print "Split at indexes = " + str(split)
 	print "Split at times: " + str(time_split)
 	print ratio_syl
 
@@ -426,8 +430,8 @@ else:
 	plt.show()
 
 	"""
+	split_wav(time_split, FN)
 	if (sys.argv[2] == "1"):
-		split_wav(time_split, FN)
 		plt.plot(chan_1)
 		plt.plot(outline)
 		plt.ylabel("RMS")

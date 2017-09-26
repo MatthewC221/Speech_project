@@ -20,7 +20,6 @@ class SignalProcessing:
 		Compares the MFCC values calculated with the reference data ones
 		param @coeff: calculated MFCC
 		"""
-
 		min_E = sys.maxint
 		saved = np.zeros(rem_size)
 		name = "-1"
@@ -288,7 +287,9 @@ def main():
 				E, alpha = signal.E_calculation(total_mean, coeff)
 				print "E = " + str(E) + ", alpha = " + str(alpha)
 			else:
-				print total_mean
+				for tmp in total_mean:
+					sys.stdout.write(str(tmp) + ", ")
+				print ""
 
 			plt.plot(total_mean, label="Mean of files", linewidth=5.0)
 			plt.legend()
