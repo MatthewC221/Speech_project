@@ -1,0 +1,33 @@
+X for complete miss, S for syllable miss, Z for syllable miss causing complete miss
+
+test_lightly.pl 
+1 1
+2 1
+2 1
+2 1
+1 1
+Z Z
+X 2
+
+test_daylight.pl
+1 1
+1 1
+1 2
+1 1
+1 1
+1 3(S)
+1 3(S)
+1 1
+1 1
+1 Z
+
+test_gentle.pl
+1 1
+1 S
+1 1
+1 1
+Z Z
+1 1
+1 1
+1(S) Z
+2(S) Z

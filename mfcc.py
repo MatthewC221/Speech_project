@@ -8,7 +8,8 @@ import wave
 import matplotlib.pyplot as plt
 import math
 
-# Currently to classify syllables, ./mfcc.py <.wav> 0 -1 <correct_wav>
+# Currently to classify syllables: ./mfcc.py <.wav> 0 -1 <correct_wav>
+# To get average MFCC's: ./mfcc.py <path_to_wav> F <number_wav> F
 
 E = 2.7182818284590452353
 rem_size = 12
@@ -24,10 +25,11 @@ class SignalProcessing:
 		saved = np.zeros(rem_size)
 		name = "-1"
 
+		top = []
+
 		f = open("data.txt", "r")
 		for line in f:
 			parse = line.split(":")
-			print "Calculating for syllable: " + parse[0]
 			coeff = parse[1].split(",")
 
 			ref = np.zeros(rem_size)
@@ -52,10 +54,14 @@ class SignalProcessing:
 			if (parse[0] == right_syl):
 				plt.plot(ref, label=parse[0], linewidth=5.0)
 
-			diff = abs(sum(mfcc - ref))
-			print "E = " + str(E) + ", alpha = " + str(alpha) 
-			print "Jump diff = " + str(abs(jmp_diff)) + ", overall diff = " + str(diff) + "\n"
+			# diff = abs(sum(mfcc - ref))
+			top.append((parse[0], E))
 		
+		top = sorted(top, key=lambda x: x[1])
+		print "The top three elements are: "
+		for i in range(0, 3):
+			print top[i]
+
 		plt.plot(mfcc, label="Current MFCC", linewidth=5.0)
 		plt.plot(saved, label="Closest syllable: " + name)
 		plt.legend()

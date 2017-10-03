@@ -189,8 +189,6 @@ else:
 
 	# Step 2: calculate threshold, testing mode / mean / median intensity
 
-	print "----- Testing thresholds -----"
-
 	# Testing mode intensity
 	bins = np.arange(0, np.max(RMS), np.max(RMS) / 20)			# Volume level, have 20 bins of vol
 	density_1 = np.zeros(bins.size)
@@ -220,8 +218,11 @@ else:
 			max_density_2 = density_2[j]
 			index_2 = i		
 
+	"""
 	print "Mode density 1 = " + str(bins[index_1])
 	print "Mode density 2 = " + str(bins[index_2])
+	print "Median density = " + str(median_1)
+	"""
 
 	# Testing median
 	chan_1 = np.zeros(RMS.size / 2)
@@ -229,8 +230,6 @@ else:
 		chan_1[i] = RMS[i][0]
 
 	median_1 = (np.max(chan_1) / 2) 
-
-	print "Median density = " + str(median_1)
 
 	# Testing average, (only take values that are significant, the silence will lower the mean GREATLY)
 	# There is an issue with outliers...
@@ -264,7 +263,7 @@ else:
 	# Step 3
 
 	# upper_threshold = mean / count
-	upper_threshold = np.max(RMS) / 5
+	upper_threshold = np.max(RMS) / 6
 	step = mean / 4
 	lower_threshold = upper_threshold / 3 		 		
 
@@ -273,10 +272,12 @@ else:
 	count_BELOW = 0								# = 0.016 * 3 = 0.048 seconds
 	maintain = 2
 
+	"""
 	print "----- Final thresholds -----"
 	print "The upper threshold = " + str(upper_threshold)
 	print "The starting lower threshold = " + str(lower_threshold)
 	print "Step = " + str(step)
+	"""
 
 	split = []			# The times for the syllable split
 
@@ -350,7 +351,7 @@ else:
 
 						calc = calculate_mean(ratio, max(0, j - 3), min(ratio.size, j + 3))
 						print "Attempted = " + str(calc) + ", on j = " + str(j)
-						if (calc > 0.20):
+						if (calc > 0.12):
 							ratio_syl.append(calc)
 							last_peak.append(j)
 							syl += 1
@@ -394,10 +395,6 @@ else:
 	time_split = [(0.016 * x) for x in split]
 	if (len(time_split) > 0):
 		del time_split[-1]
-
-	print "Split at indexes = " + str(split)
-	print "Split at times: " + str(time_split)
-	print ratio_syl
 
 	# Last step, extract pitch contour using 100msec windows and 20msec time steps
 	"""
