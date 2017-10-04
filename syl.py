@@ -160,23 +160,28 @@ else:
 	5. Remaining peaks are syllables
 
 	"""
-	# Step 1
-	# No need for FFT, but use RMS to classify window energy. (L2-norm gives too high values such as 2 * 10^8)
+	
+	######################################################
+	# STEP 1 prep: calculating step size and window size #
+	######################################################
 
-	step_ms = 16 									# 16 m sec steps
+	step_ms = 16 											# 16 m sec steps
 
-	time_step = int((float(step_ms) / 1000) * fs)	# Number of samples stepped 
-	window_size = time_step * 4                     # Number of samples in window
+	time_step = int((float(step_ms) / 1000) * fs)			# Number of samples stepped 
+	window_size = time_step * 4                     		# Number of samples in window
 
 	# Refer to equation f(b, t) = x[b * 705 + t] (b >= 0, 0 <= t < 2820) 
 	RMS = np.zeros((x.size / (time_step * 2) + 1, 2))
 	count = 0
 
-	# Get the RMS of the window
+	#####################################################################
+	# STEP 1 & 2: splitting up into blocks and calculating RMS for each #
+	#####################################################################
+
 	for i in range(0, x.size / 2, time_step):
 		mean_squared_1 = 0
 		mean_squared_2 = 0
-		upper = min(i + window_size, (x.size / 2) - 1)		# For last window
+		upper = min(i + window_size, (x.size / 2) - 1)	
 		for j in range(i, upper):
 			mean_squared_1 += x[j][0] ** 2
 			mean_squared_2 += x[j][1] ** 2
@@ -185,11 +190,11 @@ else:
 		count += 1
 
 	ratio = unvoiced(x, time_step, window_size)
-	# End of step 1
 
-	# Step 2: calculate threshold, testing mode / mean / median intensity
+	########################################## 
+	# UNUSED STEP: calculating mode + median #
+	##########################################
 
-	# Testing mode intensity
 	bins = np.arange(0, np.max(RMS), np.max(RMS) / 20)			# Volume level, have 20 bins of vol
 	density_1 = np.zeros(bins.size)
 	density_2 = np.zeros(bins.size)
@@ -231,11 +236,10 @@ else:
 
 	median_1 = (np.max(chan_1) / 2) 
 
-	# Testing average, (only take values that are significant, the silence will lower the mean GREATLY)
-	# There is an issue with outliers...
+	######################################## 
+	# UNUSED STEP: getting rid of outliers #
+	########################################
 
-
-	# Extra step, getting rid of outliers, put everything into bins of 200. We'll establish a good max
 	bins = np.arange(0, np.max(RMS) + 200, 200)
 	freq = np.zeros(bins.size)
 
@@ -245,7 +249,9 @@ else:
 			j += 1
 		freq[j] += 1
 
-	# Setting upper bound
+	################################################ 
+	# STEP 3: calculating mean and upper threshold #
+	################################################
 
 	max_val = np.max(RMS)
 	mean = 0
@@ -258,9 +264,6 @@ else:
 
 	if (mean):
 		mean = mean / count 
-	# End of step 2
-
-	# Step 3
 
 	# The numbers below are to be calibrated properly
 	upper_threshold = np.max(RMS) / 6
@@ -287,25 +290,29 @@ else:
 	outline = np.zeros(RMS.size / 2) 
 	dips = np.zeros(RMS.size / 2) 
 
-	"""
-	Getting rid of multi peak syllables based on speaking rate
-	110-150 WPM, 1.66 syllables per word = 150 * 1.66 = 250 syl p/min = 4.16 syl p/sec
-	A syllable every 0.24 seconds at most, round down to 0.08 seconds
-	Anything faster is too much, window step = 0.016, therefore has to be > 5 samples difference
-	"""
+	########################################################################## 
+	# STEP 4: finding peaks and dips, test if meets requirements as syllable #
+	# 	Requirements of syllable:											 #
+	#	1. Has an RMS > upper_threshold										 #
+	#	2. Has dips before and after (based on step-size)					 #
+	#	3. Has a voiced : unvoiced + voiced energy ratio > 0.12				 #
+	#	4. Is at least 5 windows away from the last syllable (another  	     #
+	#	   effort to reduce unvoiced components)							 #
+	##########################################################################
 
 	last_peak = []
 	ratio_syl = []
-	# The core processing part, determining peaks and dips
 
 	while (len(RMS) > i):
+
+		# Either above thresh, below or middle
 		if (RMS[i][0] > upper_threshold):
 			count_ABOVE += 1
 			count_BELOW = 0
 		elif (RMS[i][0] < lower_threshold):
 			count_BELOW += 1
 			count_ABOVE = 0
-		else:						# If in middle, no peak / dip
+		else:					
 			count_BELOW = 0
 			count_ABOVE = 0
 		# If we're in a possible peak
@@ -371,8 +378,6 @@ else:
 								(i < len(RMS) - 2)):
 								i += 1
 							break
-						#if (RMS[i][0] > peak_val):
-						#	break
 						i += 1
 					if (insert == True):
 						split.append(i)
@@ -387,21 +392,26 @@ else:
 
 	print "Syllable count = " + str(syl)
 
-	start = 0
-
 	"""
+	start = 0
 	for i in range(len(split)):
 		mean_ratio = calculate_mean(ratio, start, split[i])
 		print "Ratio for syllable " + str(i) + ", = " + str(mean_ratio)
 		start = split[i]
 	"""
 
+	######################################################################## 
+	# STEP 5: splitting up syllables by time, using step sizes from before #
+	########################################################################
+
 	time_split = [(0.016 * x) for x in split]
 	if (len(time_split) > 0):
 		del time_split[-1]
+	split_wav(time_split, FN)
 
-	# Last step, extract pitch contour using 100msec windows and 20msec time steps
 	"""
+
+	Attempt at spectogram for unvoiced
 
 	step_ms = 20 									# 16 m sec steps
 	time_step = int((float(step_ms) / 1000) * fs)	# Number of samples stepped 
@@ -431,7 +441,6 @@ else:
 	plt.show()
 
 	"""
-	split_wav(time_split, FN)
 	if (sys.argv[2] == "1"):
 		plt.plot(chan_1)
 		plt.plot(outline)
