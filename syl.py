@@ -262,9 +262,10 @@ else:
 
 	# Step 3
 
-	# upper_threshold = mean / count
+	# The numbers below are to be calibrated properly
 	upper_threshold = np.max(RMS) / 6
 	step = mean / 4
+	print "Upper threshold = " + str(upper_threshold) + ", step = " + str(step)
 	lower_threshold = upper_threshold / 3 		 		
 
 	dip = True									# First syllable doesn't require a dip
@@ -327,20 +328,23 @@ else:
 				dip = False
 				before = max(j - 7, 0)	
 
-				# Check if there's a dip in the next 5 windows
-				while (after < min(len(RMS), j + 7) or peak_val > RMS[after][0]):
+				# Check if there's a dip in the next 7 windows
+				# print "Lower thres = " + str(lower_threshold)
+				while (after < min(len(RMS) - 1, j + 7) or peak_val > RMS[after][0]):
+					# print "after = " + str(RMS[after][])
 					if (RMS[after][0] < lower_threshold):
 						flag_after = True
 						break
 					after += 1
 
-				# Check if there's a dip in the previous 5 windows
+				# Check if there's a dip in the previous 7 windows
 				while (before < j or peak_val > RMS[before][0]):
 					if (RMS[before][0] < lower_threshold):
 						flag_before = True
 						break
 					before += 1
 
+				# print "cur = " + str(i) + ", after = " + str(flag_after) + ", before = " + str(flag_before)
 				# IFF there is a dip before and after we can proceed
 				insert = False
 				if (flag_before == True and flag_after == True):
