@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
-# Script to separate syllables before classifying them, inspired by Pratt script: 
-# https://link.springer.com/content/pdf/10.3758%2FBRM.41.2.385.pdf
-# However there are definitely my own elements in there
+"""
+Library form of syl.py, doesn't break syllables up but returns RMS and 
+voiced/unvoiced ratios. Also has other useful functions
+"""
 
 import sys
 import numpy as np

@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+"""
+Library form of mfcc.py, doesn't classify syllables up but returns MFCC coefficients and 
+has other useful functions
+"""
+
 import sys
 import numpy as np
 import scipy.io.wavfile
