@@ -56,5 +56,4 @@ else:
 	fig1 = plt.figure()
 	ax1 = fig1.add_subplot(111)
 	ax1.plot(all_coeff)
-
 	plt.show()
