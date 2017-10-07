@@ -205,6 +205,8 @@ class SignalProcessing:
 		param @window_size: window size we take the fft on
 		param @include: whether the current signal is the data or the reference
 		param @mean: np.array to fill up
+
+		return @coeff: the MFCC coefficients for the entire file
 		"""
 		(fs, x) = scipy.io.wavfile.read(file_name)
 
@@ -269,12 +271,14 @@ class SignalProcessing:
 			# plt.plot(coeff, label=file_name, linewidth=4.0)
 			return coeff
 
-	def compute_mfcc_BLOCK(self, window, fs=44100):
+	def compute_mfcc_BLOCK(self, window, filters, Hm, num_filter=28):
 		"""
 		Computes the mfcc of the WINDOW (PCM format), adds the current signal to the mean and plots it
 		param @window: the window to compute MFCC's on
-		"""
+		param @fs: sampling frequency
 
+		return @coeff: the MFCC coefficients for the window
+		"""
 		#########################################################
 		# STEP 1: create a hanning window and multiply with PCM #
 		#########################################################		
@@ -286,25 +290,14 @@ class SignalProcessing:
 		# STEP 2: Apply mel filterbank to power spectra      #
 		######################################################
 
-		num_filter = 28
-		(Hm, f) = self.create_filter(num_filter, 300, fs / 2, window_size, fs)
-
-		windows = np.zeros((num_filter - 2, 2))			# The filter ranges, e.g. 19->30, 24->36, 30->43
-
-		# Creating the window ranges, e.g. [[9, 12],[12, 15], [15, 18]]
-		for i in range(num_filter - 2):
-			windows[i] = ((f[i], f[i + 2]))
-
 		bank_energies = np.zeros(num_filter - 2)
 
-		for i in range(num_win):
-			# Computing energies, using upper bound and lower bounds
-			for j in range(num_filter - 2):
-				LB = int(windows[j][0]) + 1
-				UB = int(windows[j][1])
+		for j in range(num_filter - 2):
+			LB = int(filters[j][0]) + 1
+			UB = int(filters[j][1])
 
-				for k in range(LB, UB):
-					bank_energies[j] += (Hm[j][k] * windowed_fft[i][k])
+			for k in range(LB, UB):
+				bank_energies[j] += (Hm[j][k] * windowed_fft[k])
 
 		################################################
 		# STEP 3: Take log of filterbank energies      #
@@ -315,11 +308,27 @@ class SignalProcessing:
 		################################################
 		# STEP 4: Take DCT of filterbank energies      #
 		################################################
-		dct_energy = scipy.fftpack.dct(bank_energies, 2)
-		
-		coeff = np.zeros(rem_size)
 
+		dct_energy = scipy.fftpack.dct(bank_energies, 2)
+		coeff = np.zeros(rem_size)
 		for i in range(2, 14):
 			coeff[i - 2] = dct_energy[i]
 
 		return coeff
+
+	def mfcc_SETUP(self, window_size, fs=44100):
+		"""
+		Sets up the filterbank for future uses, (doing on multiple blocks)
+		param @window_size: the block size the MFCC will take in the future
+		param @fs: sampling frequency
+
+		return @filters: the filter ranges, e.g. [[19,35],[27,45],[35,56]]
+		return @Hm: the magnitude for the triangular filters (from 0 -> 1)
+		"""		
+		num_filter = 28
+		filters = np.zeros((num_filter - 2, 2))										# The filter ranges, e.g. 19->30, 24->36, 30->43
+		(Hm, f) = self.create_filter(num_filter, 300, fs / 2, window_size, fs)		# Creating the window ranges, e.g. [[9, 12],[12, 15], [15, 18]]
+		for i in range(num_filter - 2):
+			filters[i] = ((f[i], f[i + 2]))
+
+		return (filters, Hm)
