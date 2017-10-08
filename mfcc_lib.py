@@ -21,7 +21,7 @@ rem_size = 12
 num_files = -1
 
 class SignalProcessing:
-	def compare(self, mfcc, right_syl):
+	def compare(self, mfcc):
 		""" 
 		Compares the MFCC values calculated with the reference data ones using
 		mean squared error and curve fitting
@@ -33,7 +33,7 @@ class SignalProcessing:
 
 		top = []
 
-		f = open("data.txt", "r")
+		f = open("sand.txt", "r")
 		for line in f:
 			parse = line.split(":")
 			coeff = parse[1].split(",")
@@ -56,9 +56,6 @@ class SignalProcessing:
 				min_E = E
 				saved = np.copy(ref)
 				name = parse[0]
-
-			if (parse[0] == right_syl):
-				plt.plot(ref, label=parse[0], linewidth=5.0)
 
 			top.append((parse[0], E))
 		

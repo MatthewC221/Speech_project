@@ -53,6 +53,9 @@ else:
 		all_coeff[count] = signal.compute_mfcc_BLOCK(window, filters, Hm)
 		count += 1
 
+	for i in xrange(count):
+		signal.compare(all_coeff[i])
+
 	fig1 = plt.figure()
 	ax1 = fig1.add_subplot(111)
 	ax1.plot(all_coeff)
