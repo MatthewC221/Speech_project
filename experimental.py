@@ -53,10 +53,17 @@ else:
 		all_coeff[count] = signal.compute_mfcc_BLOCK(window, filters, Hm)
 		count += 1
 
-	for i in xrange(count):
-		signal.compare(all_coeff[i])
-
+	# for i in xrange(count):
+	#	signal.compare(all_coeff[i])
 	fig1 = plt.figure()
 	ax1 = fig1.add_subplot(111)
-	ax1.plot(all_coeff)
+
+	size = all_coeff.size / num_coeff
+	for i in xrange(num_coeff):
+		cur = np.zeros(size)
+		for j in xrange(size):
+			cur[j] = all_coeff[j][i]	
+		ax1.plot(cur, label="MFCC coeff " + str(i))
+
+	ax1.legend(loc='lower right')
 	plt.show()
