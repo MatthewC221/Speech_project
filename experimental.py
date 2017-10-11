@@ -15,6 +15,8 @@ import math
 
 num_coeff = 12
 
+# Consider how the MFCC is changing over time!
+
 if (len(sys.argv) != 2):
 	print "Usage ./experimental.py <.wav file>"
 else:
@@ -22,14 +24,6 @@ else:
 	(fs, x) = scipy.io.wavfile.read(FN)
 
 	RMS, ratio = returnVoicedRMS((fs, x))
-	plt.subplot(2, 1, 1)
-	plt.plot(RMS)
-	plt.ylabel("RMS")
-
-	plt.subplot(2, 1, 2)
-	plt.plot(ratio)
-	plt.ylabel("Ratio V:UV+V")
-	plt.xlabel("Window")
 
 	step_ms = 16 											# 16 m sec steps
 	time_step = int((float(step_ms) / 1000) * fs)			# Number of samples stepped 
@@ -55,15 +49,28 @@ else:
 
 	# for i in xrange(count):
 	#	signal.compare(all_coeff[i])
-	fig1 = plt.figure()
-	ax1 = fig1.add_subplot(111)
+	# fig1 = plt.figure()
+	# ax1 = fig1.add_subplot(111)
+
+	zero_cross = zero_crossings(fs, x)
+
+	f, axarr = plt.subplots(4, sharex=True)
+	axarr[0].plot(RMS)
+	axarr[0].set_title("RMS")
+	axarr[1].plot(ratio)
+	axarr[1].set_title("Voiced to unvoiced ratio")
+	axarr[2].plot(zero_cross)
+	axarr[2].set_title("Zero crossing counts")
 
 	size = all_coeff.size / num_coeff
 	for i in xrange(num_coeff):
 		cur = np.zeros(size)
 		for j in xrange(size):
 			cur[j] = all_coeff[j][i]	
-		ax1.plot(cur, label="MFCC coeff " + str(i))
+		axarr[3].plot(cur, label="MFCC coeff " + str(i))
 
-	ax1.legend(loc='lower right')
+	axarr[3].set_title("MFCC")
+	# axarr[3].legend(loc='upper left')
+
+	plt.xlabel("Window")
 	plt.show()

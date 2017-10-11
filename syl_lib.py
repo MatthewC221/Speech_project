@@ -184,3 +184,34 @@ def returnVoicedRMS((fs, x)):
 	# UNUSED STEP: calculating mode + median #
 	##########################################
 	return (RMS, ratio)
+
+def zero_crossings(fs, x):
+	"""
+	Returns the zero crossing count of the time domain (consistent with the window)
+
+	param @fs: sampling frequency
+	param @x: time domain signal
+
+	return @zero_cross: the amount of times the time domain crosses zero 
+	"""
+
+	step_ms = 16 											# 16 m sec steps
+	time_step = int((float(step_ms) / 1000) * fs)			# Number of samples stepped 
+	window_size = time_step * 4                     		# Number of samples in window
+
+	# Refer to equation f(b, t) = x[b * 705 + t] (b >= 0, 0 <= t < 2820) 
+	crossing_counts = np.zeros((x.size / (time_step * 2) + 1))
+	count = 0
+
+	for i in range(0, x.size / 2, time_step):
+		windowed_x = np.zeros(window_size)
+		tmp = 0
+		for j in range(i, min(i + window_size, x.size / 2)):
+			windowed_x[tmp] = x[j][0]
+			tmp += 1 
+
+		zero_cross = np.where(np.diff(np.signbit(windowed_x)))[0]
+		crossing_counts[count] = zero_cross.size
+		count += 1
+
+	return crossing_counts
