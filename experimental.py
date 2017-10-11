@@ -35,7 +35,9 @@ else:
 
 	all_coeff = np.zeros((num_win, num_coeff))
 
+	dft = np.zeros((num_win, window_size))
 	# Find the MFCC coefficients at each window (using the same steps and window sizes)
+
 	count = 0
 	for i in xrange(0, x.size / 2, time_step):
 		window = np.zeros(window_size)
@@ -44,6 +46,7 @@ else:
 		for j in range(i, i + window_size):
 			window[win_count] = x[j][0]
 			win_count += 1
+		dft[count] = scipy.fft(window)
 		all_coeff[count] = signal.compute_mfcc_BLOCK(window, filters, Hm)
 		count += 1
 
@@ -54,7 +57,7 @@ else:
 
 	zero_cross = zero_crossings(fs, x)
 
-	f, axarr = plt.subplots(4, sharex=True)
+	f, axarr = plt.subplots(5, sharex=True)
 	axarr[0].plot(RMS)
 	axarr[0].set_title("RMS")
 	axarr[1].plot(ratio)
@@ -70,6 +73,8 @@ else:
 		axarr[3].plot(cur, label="MFCC coeff " + str(i))
 
 	axarr[3].set_title("MFCC")
+	axarr[4].plot(dft)
+	axarr[4].set_title("FFT")
 	# axarr[3].legend(loc='upper left')
 
 	plt.xlabel("Window")
