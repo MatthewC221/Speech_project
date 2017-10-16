@@ -33,7 +33,7 @@ class SignalProcessing:
 
 		top = []
 
-		f = open("sand.txt", "r")
+		f = open("phonemes.txt", "r")
 		for line in f:
 			parse = line.split(":")
 			coeff = parse[1].split(",")
@@ -60,8 +60,8 @@ class SignalProcessing:
 			top.append((parse[0], E))
 		
 		top = sorted(top, key=lambda x: x[1])
-		print "The top three elements are: "
-		for i in range(0, 3):
+		print "The top elements are: "
+		for i in range(len(top)):
 			print top[i]
 
 		"""
@@ -268,6 +268,24 @@ class SignalProcessing:
 			# plt.plot(coeff, label=file_name, linewidth=4.0)
 			return coeff
 
+	def compute_average_MFCC(self, coeff):
+		"""
+		Computes the average coefficients of a numpy array, compare it to mfcc.py results
+		param @coeff: the blocks of MFCC coefficients
+
+		return @average: the average coefficients for each MFCC
+		"""
+		size = 12
+		ave = np.zeros(size)
+
+		# Number of windows = coefficient size / size
+		for i in xrange(size):
+			for j in xrange(coeff.size / size):
+				ave[i] += coeff[j][i]
+			ave[i] = ave[i] / (coeff.size / size)  	
+		
+		return ave
+
 	def compute_mfcc_BLOCK(self, window, filters, Hm, num_filter=28):
 		"""
 		Computes the mfcc of the WINDOW (PCM format), adds the current signal to the mean and plots it
@@ -280,8 +298,8 @@ class SignalProcessing:
 		# STEP 1: create a hanning window and multiply with PCM #
 		#########################################################		
 
-		W = scipy.signal.hanning(window.size, False)
-		windowed_fft = self.periodogram(scipy.fft(window * W))
+		W = scipy.signal.hanning(window.size, False)				
+		windowed_fft = self.periodogram(scipy.fft(window * W))	
 
 		######################################################
 		# STEP 2: Apply mel filterbank to power spectra      #
@@ -322,6 +340,7 @@ class SignalProcessing:
 		return @filters: the filter ranges, e.g. [[19,35],[27,45],[35,56]]
 		return @Hm: the magnitude for the triangular filters (from 0 -> 1)
 		"""		
+
 		num_filter = 28
 		filters = np.zeros((num_filter - 2, 2))										# The filter ranges, e.g. 19->30, 24->36, 30->43
 		(Hm, f) = self.create_filter(num_filter, 300, fs / 2, window_size, fs)		# Creating the window ranges, e.g. [[9, 12],[12, 15], [15, 18]]

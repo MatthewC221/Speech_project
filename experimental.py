@@ -25,13 +25,18 @@ else:
 
 	RMS, ratio = returnVoicedRMS((fs, x))
 
-	step_ms = 16 											# 16 m sec steps
-	time_step = int((float(step_ms) / 1000) * fs)			# Number of samples stepped 
-	window_size = time_step * 4                     		# Number of samples in window
+	# step_ms = 16 											# 16 m sec steps
+	# time_step = int((float(step_ms) / 1000) * fs)			# Number of samples stepped 
+	# window_size = time_step * 4                     		# Number of samples in window
+
+	step_ms = 25 									# 25 msec steps
+	time_step = fs / 100
+	window_size = 1024
 
 	signal = SignalProcessing()
 	num_win = int(math.ceil(x.size / (2 * time_step)) + 1)	# Number of windows
-	(filters, Hm) = signal.mfcc_SETUP(window_size)
+
+	(filters, Hm) = signal.mfcc_SETUP(1024)
 
 	all_coeff = np.zeros((num_win, num_coeff))
 
@@ -51,7 +56,7 @@ else:
 		count += 1
 
 	# for i in xrange(count):
-	#	signal.compare(all_coeff[i])
+	# 	if (RMS[i][0] > 2000): signal.compare(all_coeff[i])
 	# fig1 = plt.figure()
 	# ax1 = fig1.add_subplot(111)
 
@@ -71,6 +76,10 @@ else:
 		for j in xrange(size):
 			cur[j] = all_coeff[j][i]	
 		axarr[3].plot(cur, label="MFCC coeff " + str(i))
+
+	ave = signal.compute_average_MFCC(all_coeff)
+	tmp = np.full(num_win, ave[0])
+	axarr[3].plot(tmp, label="0th coefficient ave")
 
 	axarr[3].set_title("MFCC")
 	axarr[4].plot(dft)
